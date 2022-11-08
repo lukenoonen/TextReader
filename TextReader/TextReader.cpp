@@ -1,5 +1,10 @@
 #include "TextReader.h"
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, CTextBlock *&
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextBlock *&pValue )
 {
 	if (!pTextItem->GetTextBlock())
@@ -9,6 +14,11 @@ bool UTIL_GetValue( const CTextItem *pTextItem, CTextBlock *&pValue )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, CTextLine *&
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextLine *&pValue )
 {
 	if (!pTextItem->GetTextLine())
@@ -18,6 +28,12 @@ bool UTIL_GetValue( const CTextItem *pTextItem, CTextLine *&pValue )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, char *&
+// Output: true on successful data extraction, false on failure
+// Note: dynamically allocates and copies string, be sure to delete
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, char *&sValue )
 {
 	if (!pTextItem->GetString())
@@ -27,6 +43,13 @@ bool UTIL_GetValue( const CTextItem *pTextItem, char *&sValue )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, const char *&
+// Output: true on successful data extraction, false on failure
+// Note: just copies pointer, be sure not to use after CTextReader is out of
+//       scope
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, const char *&sValue )
 {
 	if (!pTextItem->GetString())
@@ -36,6 +59,13 @@ bool UTIL_GetValue( const CTextItem *pTextItem, const char *&sValue )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, bool &
+// Output: true on successful data extraction, false on failure
+// Note: "true" and a non-zero integer value is interpreted as true, "false"
+//       and 0 are interpreted as false
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue )
 {
 	if (!pTextItem->GetString())
@@ -51,7 +81,11 @@ bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue )
 
 	return true;
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, int &
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue )
 {
 	if (!pTextItem->GetString())
@@ -61,6 +95,11 @@ bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const CTextItem *, float &
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, float &fValue )
 {
 	if (!pTextItem->GetString())
@@ -70,28 +109,67 @@ bool UTIL_GetValue( const CTextItem *pTextItem, float &fValue )
 	return true;
 }
 
-CTextReader::CTextReader( const char *sText )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTextReader::CTextReader()
 {
-	m_sText = _strdup( sText );
-	m_pTextBlock = new CTextBlock( m_sText );
+	m_pTextBlock = NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTextReader::~CTextReader()
 {
-	delete[] m_sText;
-	delete m_pTextBlock;
+	if (m_pTextBlock)
+	{
+		delete[] m_sText;
+		delete m_pTextBlock;
+	}
 }
 
-bool CTextReader::Success( void ) const
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: char *
+// Output: true upon successful interpreation of text, false otherwise
+//-----------------------------------------------------------------------------
+bool CTextReader::ReadText( const char *sText )
 {
-	return m_pTextBlock->Success();
+	if (m_pTextBlock)
+	{
+		delete[] m_sText;
+		delete m_pTextBlock;
+	}
+
+	m_sText = _strdup( sText );
+	m_pTextBlock = new CTextBlock( m_sText );
+
+	if (!m_pTextBlock->Success())
+	{
+		delete[] m_sText;
+		delete m_pTextBlock;
+		m_pTextBlock = NULL;
+		return false;
+	}
+
+	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: the CTextBlock instance
+// Note: If read has failed or nothing has been read, will return NULL
+//-----------------------------------------------------------------------------
 CTextBlock *CTextReader::GetTextBlock( void ) const
 {
 	return m_pTextBlock;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: char *
+//-----------------------------------------------------------------------------
 CTextBlock::CTextBlock( char *sTextBlock )
 {
 	m_bSuccess = false;
@@ -145,12 +223,19 @@ CTextBlock::CTextBlock( char *sTextBlock )
 	m_bSuccess = true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTextBlock::~CTextBlock()
 {
 	for (unsigned int i = 0; i < m_pTextLines.size(); i++)
 		delete m_pTextLines[i];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: true if text was successfully interpreted, false otherwise
+//-----------------------------------------------------------------------------
 bool CTextBlock::Success( void ) const
 {
 	if (!m_bSuccess)
@@ -163,11 +248,21 @@ bool CTextBlock::Success( void ) const
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: The number of CTextLine instances
+//-----------------------------------------------------------------------------
 unsigned int CTextBlock::GetTextLineCount( void ) const
 {
 	return (unsigned int)m_pTextLines.size();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: unsigned int
+// Output: Returns the corresponding CTextLine instance for the given index,
+//         or NULL if index is invalid
+//-----------------------------------------------------------------------------
 CTextLine *CTextBlock::GetTextLine( unsigned int uiIndex ) const
 {
 	if (uiIndex >= m_pTextLines.size())
@@ -176,6 +271,12 @@ CTextLine *CTextBlock::GetTextLine( unsigned int uiIndex ) const
 	return m_pTextLines[uiIndex];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const char *
+// Output: Returns the corresponding CTextLine instance for the given key,
+//         or NULL if key does not match any
+//-----------------------------------------------------------------------------
 CTextLine *CTextBlock::GetTextLine( const char *sKey ) const
 {
 	for (unsigned int i = 0; i < m_pTextLines.size(); i++)
@@ -188,6 +289,10 @@ CTextLine *CTextBlock::GetTextLine( const char *sKey ) const
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: char *
+//-----------------------------------------------------------------------------
 CTextLine::CTextLine( char *sTextLine )
 {
 	while (true)
@@ -239,12 +344,19 @@ CTextLine::CTextLine( char *sTextLine )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTextLine::~CTextLine()
 {
 	for (unsigned int i = 0; i < m_pTextItems.size(); i++)
 		delete m_pTextItems[i];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: true if text was successfully interpreted, false otherwise
+//-----------------------------------------------------------------------------
 bool CTextLine::Success( void ) const
 {
 	for (unsigned int i = 0; i < m_pTextItems.size(); i++)
@@ -254,10 +366,21 @@ bool CTextLine::Success( void ) const
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: The number of CTextLine instances
+//-----------------------------------------------------------------------------
 unsigned int CTextLine::GetTextItemCount( void ) const
 {
 	return (unsigned int)m_pTextItems.size();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: unsigned int
+// Output: Returns the corresponding CTextItem instance for the given index,
+//         or NULL if index is invalid
+//-----------------------------------------------------------------------------
 
 CTextItem *CTextLine::GetTextItem( unsigned int uiIndex ) const
 {
@@ -267,12 +390,22 @@ CTextItem *CTextLine::GetTextItem( unsigned int uiIndex ) const
 	return m_pTextItems[uiIndex];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const char *
+// Output: Returns true if the string value of the CTextItem instance at index
+//         zero is equal to the key string input, false otherwise
+//-----------------------------------------------------------------------------
 bool CTextLine::IsKey( const char *sKey ) const
 {
 	const char *sCompareKey;
 	return GetValue( sCompareKey, 0 ) && strcmp( sKey, sCompareKey ) == 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: const char *, unsigned char
+//-----------------------------------------------------------------------------
 CTextItem::CTextItem( char *sTextItem, unsigned char ucActiveData )
 {
 	m_ucActiveData = ucActiveData;
@@ -289,7 +422,9 @@ CTextItem::CTextItem( char *sTextItem, unsigned char ucActiveData )
 		break;
 	}
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTextItem::~CTextItem()
 {
 	switch (m_ucActiveData)
@@ -303,6 +438,10 @@ CTextItem::~CTextItem()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: true if text was successfully interpreted, false otherwise
+//-----------------------------------------------------------------------------
 bool CTextItem::Success( void ) const
 {
 	switch (m_ucActiveData)
@@ -316,6 +455,10 @@ bool CTextItem::Success( void ) const
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: returns CTextBlock if it is the active union member, NULL otherwise
+//-----------------------------------------------------------------------------
 CTextBlock *CTextItem::GetTextBlock( void ) const
 {
 	if (m_ucActiveData == 0)
@@ -324,6 +467,10 @@ CTextBlock *CTextItem::GetTextBlock( void ) const
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: returns CTextItem if it is the active union member, NULL otherwise
+//-----------------------------------------------------------------------------
 CTextLine *CTextItem::GetTextLine( void ) const
 {
 	if (m_ucActiveData == 1)
@@ -332,6 +479,10 @@ CTextLine *CTextItem::GetTextLine( void ) const
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output: returns string if it is the active union member, NULL otherwise
+//-----------------------------------------------------------------------------
 const char *CTextItem::GetString( void ) const
 {
 	if (m_ucActiveData == 2)

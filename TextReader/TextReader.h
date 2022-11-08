@@ -1,13 +1,29 @@
+//=============== Copyright Luke Noonen, All rights reserved. ===============//
+//
+// Purpose: Declares the CTextReader class and its component classes,
+// CTextBlock, CTextLine, and CTextItem, as well as UTIL functions
+// used for extracting selected data types from a CTextItem instance
+//
+//===========================================================================//
+
 #ifndef TEXTREADER_H
 #define TEXTREADER_H
 
 #include <vector>
 #include <string>
 
+//-----------------------------------------------------------------------------
+// Forward declarations
+//-----------------------------------------------------------------------------
+
 class CTextReader;
 class CTextBlock;
 class CTextLine;
 class CTextItem;
+
+//-----------------------------------------------------------------------------
+// UTIL function declarations
+//-----------------------------------------------------------------------------
 
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextBlock *&pValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextLine *&pValue );
@@ -17,14 +33,16 @@ bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, float &fValue );
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 class CTextReader
 {
 public:
-	CTextReader( const char *sText );
+	CTextReader();
 	~CTextReader();
 
-	bool Success( void ) const;
-
+	bool ReadText( const char *sText );
 	CTextBlock *GetTextBlock( void ) const;
 
 private:
@@ -32,6 +50,9 @@ private:
 	CTextBlock *m_pTextBlock;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 class CTextBlock
 {
 public:
@@ -52,6 +73,9 @@ private:
 	std::vector<CTextLine *> m_pTextLines;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 class CTextLine
 {
 public:
@@ -71,6 +95,9 @@ private:
 	std::vector<CTextItem *> m_pTextItems;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 class CTextItem
 {
 public:
@@ -95,18 +122,35 @@ private:
 	} m_uData;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: T &, unsigned int, const char *
+// Output: true upon successful read of value of type T of the given index
+//         of the given key, false otherwise
+//-----------------------------------------------------------------------------
 template <class T> bool CTextBlock::GetValue( T &tValue, unsigned int uiIndex, const char *sKey ) const
 {
 	CTextLine *pTextLine = GetTextLine( sKey );
 	return pTextLine && pTextLine->GetValue( tValue, uiIndex );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: T &, unsigned int
+// Output: true upon successful read of value of type T of the given index,
+//         false otherwise
+//-----------------------------------------------------------------------------
 template <class T> bool CTextLine::GetValue( T &tValue, unsigned int uiIndex ) const
 {
 	CTextItem *pTextItem = GetTextItem( uiIndex );
 	return pTextItem && pTextItem->GetValue( tValue );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input: T &
+// Output: true upon successful read of value of type T, false otherwise
+//-----------------------------------------------------------------------------
 template <class T> bool CTextItem::GetValue( T &tValue ) const
 {
 	return UTIL_GetValue( this, tValue );
