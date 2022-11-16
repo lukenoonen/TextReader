@@ -1,8 +1,15 @@
+//=============== Copyright Luke Noonen, All rights reserved. ===============//
+//
+// Purpose: Defines the CTextReader class and its component classes,
+// CTextBlock, CTextLine, and CTextItem, as well as UTIL functions
+// used for extracting selected data types from a CTextItem instance
+//
+//===========================================================================//
+
 #include "TextReader.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, CTextBlock *&
+// Purpose:
 // Output: true on successful data extraction, false on failure
 //-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextBlock *&pValue )
@@ -15,8 +22,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, CTextBlock *&pValue )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, CTextLine *&
+// Purpose:
 // Output: true on successful data extraction, false on failure
 //-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, CTextLine *&pValue )
@@ -29,8 +35,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, CTextLine *&pValue )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, char *&
+// Purpose:
 // Output: true on successful data extraction, false on failure
 // Note: dynamically allocates and copies string, be sure to delete
 //-----------------------------------------------------------------------------
@@ -44,8 +49,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, char *&sValue )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, const char *&
+// Purpose:
 // Output: true on successful data extraction, false on failure
 // Note: just copies pointer, be sure not to use after CTextReader is out of
 //       scope
@@ -60,8 +64,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, const char *&sValue )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, bool &
+// Purpose:
 // Output: true on successful data extraction, false on failure
 // Note: "true" and a non-zero integer value is interpreted as true, "false"
 //       and 0 are interpreted as false
@@ -82,8 +85,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue )
 	return true;
 }
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, int &
+// Purpose:
 // Output: true on successful data extraction, false on failure
 //-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue )
@@ -96,8 +98,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const CTextItem *, float &
+// Purpose:
 // Output: true on successful data extraction, false on failure
 //-----------------------------------------------------------------------------
 bool UTIL_GetValue( const CTextItem *pTextItem, float &fValue )
@@ -130,8 +131,7 @@ CTextReader::~CTextReader()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: char *
+// Purpose:
 // Output: true upon successful interpreation of text, false otherwise
 //-----------------------------------------------------------------------------
 bool CTextReader::ReadText( const char *sText )
@@ -168,7 +168,6 @@ CTextBlock *CTextReader::GetTextBlock( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input: char *
 //-----------------------------------------------------------------------------
 CTextBlock::CTextBlock( char *sTextBlock )
 {
@@ -258,10 +257,9 @@ unsigned int CTextBlock::GetTextLineCount( void ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: unsigned int
-// Output: Returns the corresponding CTextLine instance for the given index,
-//         or NULL if index is invalid
+// Purpose:
+// Output: the corresponding CTextLine instance for the given index, or NULL
+//         if index is invalid
 //-----------------------------------------------------------------------------
 CTextLine *CTextBlock::GetTextLine( unsigned int uiIndex ) const
 {
@@ -272,10 +270,9 @@ CTextLine *CTextBlock::GetTextLine( unsigned int uiIndex ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const char *
-// Output: Returns the corresponding CTextLine instance for the given key,
-//         or NULL if key does not match any
+// Purpose:
+// Output: the corresponding CTextLine instance for the given key, or NULL if
+//         key does not match any
 //-----------------------------------------------------------------------------
 CTextLine *CTextBlock::GetTextLine( const char *sKey ) const
 {
@@ -290,8 +287,7 @@ CTextLine *CTextBlock::GetTextLine( const char *sKey ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: char *
+// Purpose:
 //-----------------------------------------------------------------------------
 CTextLine::CTextLine( char *sTextLine )
 {
@@ -376,10 +372,9 @@ unsigned int CTextLine::GetTextItemCount( void ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: unsigned int
-// Output: Returns the corresponding CTextItem instance for the given index,
-//         or NULL if index is invalid
+// Purpose:
+// Output: the corresponding CTextItem instance for the given index, or NULL 
+//         if index is invalid
 //-----------------------------------------------------------------------------
 
 CTextItem *CTextLine::GetTextItem( unsigned int uiIndex ) const
@@ -391,10 +386,9 @@ CTextItem *CTextLine::GetTextItem( unsigned int uiIndex ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const char *
-// Output: Returns true if the string value of the CTextItem instance at index
-//         zero is equal to the key string input, false otherwise
+// Purpose:
+// Output: true if the string value of the CTextItem instance at index zero is
+//         equal to the key string input, false otherwise
 //-----------------------------------------------------------------------------
 bool CTextLine::IsKey( const char *sKey ) const
 {
@@ -403,8 +397,7 @@ bool CTextLine::IsKey( const char *sKey ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: const char *, unsigned char
+// Purpose:
 //-----------------------------------------------------------------------------
 CTextItem::CTextItem( char *sTextItem, unsigned char ucActiveData )
 {
@@ -457,7 +450,7 @@ bool CTextItem::Success( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output: returns CTextBlock if it is the active union member, NULL otherwise
+// Output: CTextBlock if it is the active union member, NULL otherwise
 //-----------------------------------------------------------------------------
 CTextBlock *CTextItem::GetTextBlock( void ) const
 {
@@ -469,7 +462,7 @@ CTextBlock *CTextItem::GetTextBlock( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output: returns CTextItem if it is the active union member, NULL otherwise
+// Output: CTextItem if it is the active union member, NULL otherwise
 //-----------------------------------------------------------------------------
 CTextLine *CTextItem::GetTextLine( void ) const
 {
@@ -481,7 +474,7 @@ CTextLine *CTextItem::GetTextLine( void ) const
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output: returns string if it is the active union member, NULL otherwise
+// Output: string if it is the active union member, NULL otherwise
 //-----------------------------------------------------------------------------
 const char *CTextItem::GetString( void ) const
 {

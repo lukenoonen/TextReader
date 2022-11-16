@@ -123,8 +123,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: T &, unsigned int, const char *
+// Purpose:
 // Output: true upon successful read of value of type T of the given index
 //         of the given key, false otherwise
 //-----------------------------------------------------------------------------
@@ -135,8 +134,7 @@ template <class T> bool CTextBlock::GetValue( T &tValue, unsigned int uiIndex, c
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: T &, unsigned int
+// Purpose:
 // Output: true upon successful read of value of type T of the given index,
 //         false otherwise
 //-----------------------------------------------------------------------------
@@ -147,8 +145,7 @@ template <class T> bool CTextLine::GetValue( T &tValue, unsigned int uiIndex ) c
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input: T &
+// Purpose:
 // Output: true upon successful read of value of type T, false otherwise
 //-----------------------------------------------------------------------------
 template <class T> bool CTextItem::GetValue( T &tValue ) const
