@@ -84,6 +84,7 @@ bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue )
 
 	return true;
 }
+
 //-----------------------------------------------------------------------------
 // Purpose:
 // Output: true on successful data extraction, false on failure
@@ -94,6 +95,45 @@ bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue )
 		return false;
 
 	iValue = atoi( pTextItem->GetString() );
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
+bool UTIL_GetValue( const CTextItem *pTextItem, unsigned int &uiValue )
+{
+	if (!pTextItem->GetString())
+		return false;
+
+	uiValue = (unsigned int)atoi( pTextItem->GetString() );
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
+bool UTIL_GetValue( const CTextItem *pTextItem, char &cValue )
+{
+	if (!pTextItem->GetString())
+		return false;
+
+	cValue = (char)atoi( pTextItem->GetString() );
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Output: true on successful data extraction, false on failure
+//-----------------------------------------------------------------------------
+bool UTIL_GetValue( const CTextItem *pTextItem, unsigned char &ucValue )
+{
+	if (!pTextItem->GetString())
+		return false;
+
+	ucValue = (char)atoi( pTextItem->GetString() );
 	return true;
 }
 
@@ -245,6 +285,8 @@ bool CTextBlock::Success( void ) const
 		if (!m_pTextLines[i]->Success())
 			return false;
 	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -360,6 +402,8 @@ bool CTextLine::Success( void ) const
 		if (!m_pTextItems[i]->Success())
 			return false;
 	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------

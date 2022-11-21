@@ -31,6 +31,9 @@ bool UTIL_GetValue( const CTextItem *pTextItem, char *&sValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, const char *&sValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, bool &bValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, int &iValue );
+bool UTIL_GetValue( const CTextItem *pTextItem, unsigned int &uiValue );
+bool UTIL_GetValue( const CTextItem *pTextItem, char &cValue );
+bool UTIL_GetValue( const CTextItem *pTextItem, unsigned char &ucValue );
 bool UTIL_GetValue( const CTextItem *pTextItem, float &fValue );
 
 //-----------------------------------------------------------------------------
