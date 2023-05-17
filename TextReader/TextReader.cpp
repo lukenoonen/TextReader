@@ -7,6 +7,7 @@
 //===========================================================================//
 
 #include "TextReader.h"
+#include <stack>
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -183,9 +184,8 @@ bool CTextReader::ReadText( const char *sText )
 	}
 
 	m_sText = _strdup( sText );
-	m_pTextBlock = new CTextBlock( m_sText );
 
-	if (!m_pTextBlock->Success())
+	if (!ProcessText( m_sText ))
 	{
 		delete[] m_sText;
 		delete m_pTextBlock;
@@ -207,59 +207,200 @@ CTextBlock *CTextReader::GetTextBlock( void ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Using an adapted LL(1) algorithm, process the text into blocks,
+// lines, and items
+// Output: true on successful read, false otherwise
+// Note: Will populate the CTextBlock data structure, but won't delete on fail
 //-----------------------------------------------------------------------------
-CTextBlock::CTextBlock( char *sTextBlock )
+bool CTextReader::ProcessText( char *sText )
 {
-	m_bSuccess = false;
+	std::stack<char> sStack;
+	std::stack<CTextBlock *> pTextBlocks;
+	std::stack<CTextLine *> pTextLines;
 
-	char *sChar = sTextBlock;
-	while (true)
+	sStack.push( 'B' );
+	pTextBlocks.push( new CTextBlock() );
+	m_pTextBlock = pTextBlocks.top();
+
+	while (!sStack.empty())
 	{
-		sChar = strpbrk( sChar, ";{[\"" );
-		if (!sChar)
-		{
-			if (*(sTextBlock + strspn( sTextBlock, " \t\n" )))
-				return;
-			else
-				break;
-		}
+		char cTop = sStack.top();
+		sText = sText + strspn( sText, " \t\n" );
 
-		if (*sChar == ';')
+		switch (cTop)
 		{
-			*sChar++ = '\0';
-			m_pTextLines.push_back( new CTextLine( sTextBlock ) );
-			sTextBlock = sChar;
-		}
-		else
+		case ';':
+		case '{':
+		case '}':
+		case '[':
+		case ']':
 		{
-			switch (*sChar++)
+			if (cTop == *sText)
 			{
+				switch (cTop)
+				{
+				case ';':
+				case ']':
+				{
+					*sText = '\0';
+					pTextLines.pop();
+					break;
+				}
+				case '}':
+				{
+					pTextBlocks.pop();
+					break;
+				}
+				}
+				sStack.pop();
+				sText++;
+			}
+			else
+			{
+				return false;
+			}
+			break;
+		}
+		case '*':
+		{
+			char *sSearch = strpbrk( sText, ";{}[] \t\n" );
+			if (sText < sSearch)
+			{
+				pTextLines.top()->AddTextItem( new CTextItem( sText ) );
+
+				sStack.pop();
+				sText = sSearch;
+				switch (*sText)
+				{
+				case ' ':
+				case '\t':
+				case '\n':
+				{
+					*sText++ = '\0';
+					break;
+				}
+				}
+			}
+			else
+			{
+				return false;
+			}
+			break;
+		}
+		case 'B':
+		{
+			switch (*sText)
+			{
+			case '\0':
+			{
+				sStack.pop();
+				break;
+			}
+			case ']':
+			case ';':
+			{
+				return false;
+			}
+			case '}':
+			{
+				sStack.pop();
+				break;
+			}
+			default:
+			{
+				pTextLines.push( new CTextLine() );
+				pTextBlocks.top()->AddTextLine( pTextLines.top() );
+
+				sStack.pop();
+				sStack.push( 'B' );
+				sStack.push( ';' );
+				sStack.push( 'L' );
+				break;
+			}
+			}
+			break;
+		}
+		case 'L':
+		{
+			switch (*sText)
+			{
+			case '}':
+			case ']':
+			case ';':
+			{
+				return false;
+			}
+			default:
+			{
+				sStack.pop();
+				sStack.push( 'I' );
+				break;
+			}
+			}
+			break;
+		}
+		case 'I':
+		{
+			switch (*sText)
+			{
+			case '}':
+			{
+				return false;
+			}
+			case ']':
+			case ';':
+			{
+				sStack.pop();
+				break;
+			}
 			case '{':
 			{
-				sChar = strchr( sChar, '}' );
+				CTextLine *pTextLine = pTextLines.top();
+				pTextBlocks.push( new CTextBlock() );
+				pTextLine->AddTextItem( new CTextItem( pTextBlocks.top() ) );
+
+				sStack.pop();
+				sStack.push( 'I' );
+				sStack.push( '}' );
+				sStack.push( 'B' );
+				sStack.push( '{' );
 				break;
 			}
 			case '[':
 			{
-				sChar = strchr( sChar, ']' );
+				CTextLine *pTextLine = pTextLines.top();
+				pTextLines.push( new CTextLine() );
+				pTextLine->AddTextItem( new CTextItem( pTextLines.top() ) );
+
+				sStack.pop();
+				sStack.push( 'I' );
+				sStack.push( ']' );
+				sStack.push( 'L' );
+				sStack.push( '[' );
 				break;
 			}
-			case '\"':
+			default:
 			{
-				sChar = strchr( sChar, '\"' );
+				sStack.pop();
+				sStack.push( 'I' );
+				sStack.push( '*' );
 				break;
 			}
 			}
-
-			if (!sChar)
-				return;
-
-			sChar++;
+			break;
+		}
 		}
 	}
 
-	m_bSuccess = true;
+	if (*sText != '\0')
+		return false;
+
+	return true;
+}
+
+CTextBlock::CTextBlock()
+{
+
 }
 
 //-----------------------------------------------------------------------------
@@ -271,22 +412,9 @@ CTextBlock::~CTextBlock()
 		delete m_pTextLines[i];
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output: true if text was successfully interpreted, false otherwise
-//-----------------------------------------------------------------------------
-bool CTextBlock::Success( void ) const
+void CTextBlock::AddTextLine( CTextLine *pTextLine )
 {
-	if (!m_bSuccess)
-		return false;
-
-	for (unsigned int i = 0; i < m_pTextLines.size(); i++)
-	{
-		if (!m_pTextLines[i]->Success())
-			return false;
-	}
-
-	return true;
+	m_pTextLines.push_back( pTextLine );
 }
 
 //-----------------------------------------------------------------------------
@@ -328,58 +456,9 @@ CTextLine *CTextBlock::GetTextLine( const char *sKey ) const
 	return NULL;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTextLine::CTextLine( char *sTextLine )
+CTextLine::CTextLine()
 {
-	while (true)
-	{
-		if (!sTextLine)
-			break;
 
-		if (!*sTextLine)
-			break;
-
-		char *sChar = sTextLine + strspn( sTextLine, " \t\n" );
-		if (!*sChar)
-			break;
-
-		char *sCharEnd;
-		unsigned char ucActiveData = 2;
-		switch (*sChar)
-		{
-		case '{':
-		{
-			ucActiveData = 0;
-			sCharEnd = strchr( ++sChar, '}' );
-			break;
-		}
-		case '[':
-		{
-			ucActiveData = 1;
-			sCharEnd = strchr( ++sChar, ']' );
-			break;
-		}
-		case '\"':
-		{
-			sCharEnd = strchr( ++sChar, '\"' );
-			break;
-		}
-		default:
-		{
-			sCharEnd = strpbrk( sChar, " \t\n" );
-			break;
-		}
-		}
-
-		if (sCharEnd)
-			*sCharEnd++ = '\0';
-
-		m_pTextItems.push_back( new CTextItem( sChar, ucActiveData ) );
-
-		sTextLine = sCharEnd;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -391,19 +470,9 @@ CTextLine::~CTextLine()
 		delete m_pTextItems[i];
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output: true if text was successfully interpreted, false otherwise
-//-----------------------------------------------------------------------------
-bool CTextLine::Success( void ) const
+void CTextLine::AddTextItem( CTextItem *pTextItem )
 {
-	for (unsigned int i = 0; i < m_pTextItems.size(); i++)
-	{
-		if (!m_pTextItems[i]->Success())
-			return false;
-	}
-
-	return true;
+	m_pTextItems.push_back( pTextItem );
 }
 
 //-----------------------------------------------------------------------------
@@ -420,7 +489,6 @@ unsigned int CTextLine::GetTextItemCount( void ) const
 // Output: the corresponding CTextItem instance for the given index, or NULL 
 //         if index is invalid
 //-----------------------------------------------------------------------------
-
 CTextItem *CTextLine::GetTextItem( unsigned int uiIndex ) const
 {
 	if (uiIndex >= m_pTextItems.size())
@@ -440,25 +508,24 @@ bool CTextLine::IsKey( const char *sKey ) const
 	return GetValue( sCompareKey, 0 ) && strcmp( sKey, sCompareKey ) == 0;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTextItem::CTextItem( char *sTextItem, unsigned char ucActiveData )
+CTextItem::CTextItem( CTextBlock *pTextBlock )
 {
-	m_ucActiveData = ucActiveData;
-	switch (m_ucActiveData)
-	{
-	case 0:
-		m_uData.pTextBlock = new CTextBlock( sTextItem );
-		break;
-	case 1:
-		m_uData.pTextLine = new CTextLine( sTextItem );
-		break;
-	case 2:
-		m_uData.sString = sTextItem;
-		break;
-	}
+	m_uData.pTextBlock = pTextBlock;
+	m_ucActiveData = 0;
 }
+
+CTextItem::CTextItem( CTextLine *pTextLine )
+{
+	m_uData.pTextLine = pTextLine;
+	m_ucActiveData = 1;
+}
+
+CTextItem::CTextItem( const char *sString )
+{
+	m_uData.sString = sString;
+	m_ucActiveData = 2;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -473,23 +540,6 @@ CTextItem::~CTextItem()
 		delete m_uData.pTextLine;
 		break;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output: true if text was successfully interpreted, false otherwise
-//-----------------------------------------------------------------------------
-bool CTextItem::Success( void ) const
-{
-	switch (m_ucActiveData)
-	{
-	case 0:
-		return m_uData.pTextBlock->Success();
-	case 1:
-		return m_uData.pTextLine->Success();
-	}
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------
